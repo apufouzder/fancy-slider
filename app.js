@@ -1,9 +1,18 @@
+/*
+ The negative value has been positive and an alert has been issued. Use (Math.abs).
+ Enter ket event ok.
+ Extra Part(1): Spinners have been added as Extra parts. And input value remove.
+ Extra Part(2): Can't find the picture. It will show an error. {Image Not Available} have been added as Extra parts.
+
+ */
 const imagesArea = document.querySelector('.images');
 const gallery = document.querySelector('.gallery');
 const galleryHeader = document.querySelector('.gallery-header');
 const searchBtn = document.getElementById('search-btn');
 const sliderBtn = document.getElementById('create-slider');
 const sliderContainer = document.getElementById('sliders');
+const spinner = document.getElementById("spinner");
+const errorMessage = document.getElementById("errorMessage");
 // selected image 
 let sliders = [];
 
@@ -25,28 +34,45 @@ const showImages = (images) => {
     div.innerHTML = ` <img class="img-fluid img-thumbnail" onclick=selectItem(event,"${image.webformatURL}") src="${image.webformatURL}" alt="${image.tags}">`;
     gallery.appendChild(div)
   })
-
+  loadingSpinner();
 }
+
 
 const getImages = (query) => {
   fetch(`https://pixabay.com/api/?key=${KEY}=${query}&image_type=photo&pretty=true`)
     .then(response => response.json())
-    .then(data => showImages(data.hitS))
+    .then(data => {
+      const imageValue = data.hits;
+      //console.log(imageValue);
+      spinner.style.display = "none";
+      if (imageValue.length === 0) {
+        errorMessage.style.display = "block";
+        gallery.innerHTML = '';
+      } else {
+        showImages(imageValue);
+      }
+
+    })
     .catch(err => console.log(err))
 }
+
 
 let slideIndex = 0;
 const selectItem = (event, img) => {
   let element = event.target;
   element.classList.add('added');
- 
+
   let item = sliders.indexOf(img);
   if (item === -1) {
     sliders.push(img);
   } else {
-    alert('Hey, Already added !')
+    //alert('Hey, Already added !')
+    element.classList.toggle('added');
+    sliders.splice(item, 1);
   }
 }
+
+
 var timer
 const createSlider = () => {
   // check slider image length
@@ -67,13 +93,17 @@ const createSlider = () => {
   document.querySelector('.main').style.display = 'block';
   // hide image aria
   imagesArea.style.display = 'none';
-  const duration = document.getElementById('duration').value || 1000;
+  let durationValue = document.getElementById('duration').value || 1000;
+  const duration = Math.abs(durationValue);
+  document.getElementById('duration').value = duration;
+  // console.log(duration);
+
   sliders.forEach(slide => {
     let item = document.createElement('div')
     item.className = "slider-item";
     item.innerHTML = `<img class="w-100"
-    src="${slide}"
-    alt="">`;
+      src="${slide}"
+      alt="">`;
     sliderContainer.appendChild(item)
   })
   changeSlide(0)
@@ -81,6 +111,7 @@ const createSlider = () => {
     slideIndex++;
     changeSlide(slideIndex);
   }, duration);
+  loadingSpinner();
 }
 
 // change slider index 
@@ -109,14 +140,38 @@ const changeSlide = (index) => {
   items[index].style.display = "block"
 }
 
+
 searchBtn.addEventListener('click', function () {
   document.querySelector('.main').style.display = 'none';
   clearInterval(timer);
   const search = document.getElementById('search');
   getImages(search.value)
   sliders.length = 0;
+  document.getElementById("search").value = '';
+  loadingSpinner();
 })
 
+
 sliderBtn.addEventListener('click', function () {
-  createSlider()
+  let duration = document.getElementById('duration').value || 1000;
+  if (duration < 0) {
+    alert("Hey, You set negative value. Your negative value has been made positive.");
+  }
+  createSlider();
+  document.getElementById("duration").value = '';
 })
+
+// added Enter Key Event
+document.getElementById("search").addEventListener("keypress", function (event) {
+  if (event.key == 'Enter') {
+    document.getElementById("search-btn").click();
+  }
+});
+
+//added loadingSpinner  Extra features.!
+const loadingSpinner = () => {
+  const spinner = document.getElementById("spinner");
+  spinner.classList.toggle("d-none");
+  errorMessage.style.display = "none";
+}
+
